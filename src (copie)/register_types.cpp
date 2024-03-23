@@ -2,8 +2,6 @@
 
 #include "eroder.h"
 #include "droplet.h"
-#include "terrain.h"
-#include "terrain_modifier.h"
 
 #include <gdextension_interface.h>
 #include <godot_cpp/core/defs.hpp>
@@ -18,9 +16,6 @@ void initialize_eroder(ModuleInitializationLevel p_level) {
 
     ClassDB::register_class<Eroder>();
     ClassDB::register_class<Droplet>();
-    
-    ClassDB::register_class<Terrain>();
-    ClassDB::register_class<TerrainModifier>();
 }
 
 void uninitialize_eroder(ModuleInitializationLevel p_level) {
