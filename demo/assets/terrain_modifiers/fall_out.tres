@@ -1,3 +1,15 @@
-[gd_resource type="TerrainModifier" format=3 uid="uid://tp04o2bdsj5a"]
+[gd_resource type="TerrainModifier" load_steps=3 format=3 uid="uid://tp04o2bdsj5a"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_vrqdg"]
+seed = 3
+frequency = 0.0008
+fractal_octaves = 7
+fractal_lacunarity = 2.59
+fractal_gain = 0.54
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_5y52f"]
+noise = SubResource("FastNoiseLite_vrqdg")
 
 [resource]
+texture = SubResource("NoiseTexture2D_5y52f")
+weight = 35.0

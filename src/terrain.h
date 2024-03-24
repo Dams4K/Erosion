@@ -3,6 +3,7 @@
 
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
+#include <godot_cpp/classes/mesh_data_tool.hpp>
 
 using namespace godot;
 
@@ -22,6 +23,8 @@ class Terrain : public Node3D {
         void set_mesh_instance(const Ref<MeshInstance3D> p_mesh_instance);
         Ref<MeshInstance3D> get_mesh_instance() const;
 
+        void set_size(const int p_size);
+        int get_size() const;
 
         void initialize_mesh_instance();
         void apply_modifiers();
@@ -29,9 +32,10 @@ class Terrain : public Node3D {
     
     private:
         MeshInstance3D* mesh_instance;
+        Ref<MeshDataTool> mdt;
         Array modifiers;
 
-        
+        int size = 128;
 };
 
 #endif

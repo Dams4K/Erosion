@@ -3,10 +3,12 @@
 #include "terrain_modifier.h"
 
 #include <godot_cpp/core/class_db.hpp>
+#include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/godot.hpp>
 
 #include <godot_cpp/classes/plane_mesh.hpp>
 #include <godot_cpp/classes/array_mesh.hpp>
+#include <godot_cpp/classes/surface_tool.hpp>
 #include <godot_cpp/classes/mesh.hpp>
 
 using namespace godot;
@@ -15,6 +17,12 @@ void Terrain::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_modifiers", "p_modifiers"), &Terrain::set_modifiers);
     ClassDB::bind_method(D_METHOD("get_modifiers"), &Terrain::get_modifiers);
     ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "modifiers", PROPERTY_HINT_ARRAY_TYPE, "24/17:TerrainModifier"), "set_modifiers", "get_modifiers");
+
+    ClassDB::bind_method(D_METHOD("generate_mesh"), &Terrain::generate_mesh);
+
+    ClassDB::bind_method(D_METHOD("set_size", "p_size"), &Terrain::set_size);
+    ClassDB::bind_method(D_METHOD("get_size"), &Terrain::get_size);
+    ADD_PROPERTY(PropertyInfo(Variant::INT, "size"), "set_size", "get_size");
 }
 
 Terrain::Terrain() {
@@ -27,6 +35,8 @@ Terrain::~Terrain() {}
 void Terrain::set_modifiers(const Array p_modifiers) { modifiers = p_modifiers; }
 Array Terrain::get_modifiers() const { return modifiers; }
 
+void Terrain::set_size(const int p_size) { size = p_size; }
+int Terrain::get_size() const { return size; };
 
 void Terrain::initialize_mesh_instance() {
     Ref<PlaneMesh> mesh;
@@ -40,25 +50,67 @@ void Terrain::apply_modifiers() {
 }
 
 void Terrain::generate_mesh() {
-    Array surface_array;
-    surface_array.resize(Mesh::ARRAY_MAX);
-
-    PackedVector3Array verts;
-    PackedVector2Array uvs;
-    PackedVector3Array normals;
-    PackedInt32Array indices;
-
-    // Fill the different arrays
-
-    // Create mesh
-    surface_array[Mesh::ARRAY_VERTEX] = verts;
-    surface_array[Mesh::ARRAY_TEX_UV] = uvs;
-    surface_array[Mesh::ARRAY_NORMAL] = normals;
-    surface_array[Mesh::ARRAY_INDEX] = indices;
-
-    Ref<ArrayMesh> mesh;
-    mesh.instantiate();
-    mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, surface_array);
-
+    Ref<PlaneMesh> plane_mesh;
+    plane_mesh.instantiate();
+    plane_mesh->set_size(Vector2(size, size));
+    plane_mesh->set_subdivide_depth(size-1);
+    plane_mesh->set_subdivide_width(size-1);
     
+    SurfaceTool* st = memnew(SurfaceTool);
+    st->create_from(plane_mesh, 0);
+    Ref<ArrayMesh> mesh = st->commit();
+
+    mdt.instantiate();
+    mdt->create_from_surface(mesh, 0);
+
+    for (int vert_i = 0; vert_i < mdt->get_vertex_count(); vert_i++) {
+        Vector3 vertex = mdt->get_vertex(vert_i);
+        for (int mod_i = 0; mod_i < modifiers.size(); mod_i++) {
+            Ref<TerrainModifier> modifier = modifiers[mod_i];
+            if (modifier == nullptr) { continue; }
+
+            double height = modifier->get_height((int) vertex.x, (int) vertex.z, Vector2i(size, size));
+            switch (modifier->get_mode()) {
+            case TerrainModifier::ModifierMode::ADD:
+                vertex.y += height;
+                break;
+            case TerrainModifier::ModifierMode::SUB:
+                vertex.y -= height;
+                break;
+            case TerrainModifier::ModifierMode::MUL:
+                vertex.y *= height;
+                break;
+            }
+        }
+
+        mdt->set_vertex(vert_i, vertex);
+    }
+
+    // Calculate the normals
+    for (int i = 0; i < mdt->get_face_count(); i++) {
+        int a = mdt->get_face_vertex(i, 0);
+        int b = mdt->get_face_vertex(i, 1);
+        int c = mdt->get_face_vertex(i, 2);
+
+        Vector3 ap = mdt->get_vertex(a);
+        Vector3 bp = mdt->get_vertex(b);
+        Vector3 cp = mdt->get_vertex(c);
+
+        Vector3 n = (bp - cp).cross(ap - bp).normalized();
+
+        mdt->set_vertex_normal(a, n + mdt->get_vertex_normal(a));
+        mdt->set_vertex_normal(b, n + mdt->get_vertex_normal(b));
+        mdt->set_vertex_normal(c, n + mdt->get_vertex_normal(c));
+    }
+
+    for (int i = 0; i < mdt->get_vertex_count(); i++) {
+        Vector3 v = mdt->get_vertex_normal(i).normalized();
+        mdt->set_vertex_normal(i, v);
+        mdt->set_vertex_color(i, Color(v.x, v.y, v.z));
+    }
+
+    mesh->clear_surfaces();
+    mdt->commit_to_surface(mesh);
+
+    mesh_instance->set_mesh(mesh);
 }
