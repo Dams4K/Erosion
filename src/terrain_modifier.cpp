@@ -67,10 +67,6 @@ double TerrainModifier::get_height(int x, int y, Vector2i size) {
     float fx = rx / (float) (size.x+1);
     float fy = ry / (float) (size.y+1);
 
-    if (rx < 0) {
-        UtilityFunctions::printt(x, rx, fx, size/2);
-    }
-
     switch (texture_mode) {
     case SCALE:
         return img->get_pixel((int) (fx * img->get_width()), (int) (fy * img ->get_height())).r * weight;

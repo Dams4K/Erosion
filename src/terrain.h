@@ -26,6 +26,9 @@ class Terrain : public Node3D {
         void set_size(const int p_size);
         int get_size() const;
 
+        void set_resolution_scale(const float p_scale);
+        float get_resolution_scale() const;
+
         void initialize_mesh_instance();
         void apply_modifiers();
         void generate_mesh();
@@ -36,6 +39,7 @@ class Terrain : public Node3D {
         Array modifiers;
 
         int size = 128;
+        float resolution_scale = 1.0;
 };
 
 #endif

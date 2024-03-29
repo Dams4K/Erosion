@@ -23,6 +23,10 @@ void Terrain::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_size", "p_size"), &Terrain::set_size);
     ClassDB::bind_method(D_METHOD("get_size"), &Terrain::get_size);
     ADD_PROPERTY(PropertyInfo(Variant::INT, "size"), "set_size", "get_size");
+
+    ClassDB::bind_method(D_METHOD("set_resolution_scale", "p_scale"), &Terrain::set_resolution_scale);
+    ClassDB::bind_method(D_METHOD("get_resolution_scale"), &Terrain::get_resolution_scale);
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "resolution_scale"), "set_resolution_scale", "get_resolution_scale");
 }
 
 Terrain::Terrain() {
@@ -38,6 +42,9 @@ Array Terrain::get_modifiers() const { return modifiers; }
 void Terrain::set_size(const int p_size) { size = p_size; }
 int Terrain::get_size() const { return size; };
 
+void Terrain::set_resolution_scale(const float p_scale) { resolution_scale = p_scale; }
+float Terrain::get_resolution_scale() const { return resolution_scale; }
+
 void Terrain::initialize_mesh_instance() {
     Ref<PlaneMesh> mesh;
     mesh.instantiate();
@@ -51,11 +58,15 @@ void Terrain::apply_modifiers() {
 
 void Terrain::generate_mesh() {
     Ref<PlaneMesh> plane_mesh;
+
+    Vector2 v_size = Vector2(size, size);
+    Vector2 sub_size = v_size * resolution_scale;
+
     plane_mesh.instantiate();
-    plane_mesh->set_size(Vector2(size, size));
-    plane_mesh->set_subdivide_depth(size-1);
-    plane_mesh->set_subdivide_width(size-1);
-    
+    plane_mesh->set_size(v_size);
+    plane_mesh->set_subdivide_depth(sub_size.x-1);
+    plane_mesh->set_subdivide_width(sub_size.y-1);
+
     SurfaceTool* st = memnew(SurfaceTool);
     st->create_from(plane_mesh, 0);
     Ref<ArrayMesh> mesh = st->commit();
@@ -69,7 +80,7 @@ void Terrain::generate_mesh() {
             Ref<TerrainModifier> modifier = modifiers[mod_i];
             if (modifier == nullptr) { continue; }
 
-            double height = modifier->get_height((int) vertex.x, (int) vertex.z, Vector2i(size, size));
+            double height = modifier->get_height((int) (vertex.x * resolution_scale), (int) (vertex.z * resolution_scale), sub_size);
             switch (modifier->get_mode()) {
             case TerrainModifier::ModifierMode::ADD:
                 vertex.y += height;
