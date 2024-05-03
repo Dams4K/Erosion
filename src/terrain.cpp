@@ -11,6 +11,10 @@
 #include <godot_cpp/classes/surface_tool.hpp>
 #include <godot_cpp/classes/mesh.hpp>
 
+//- DEBUG INCLUDES -//
+#include <godot_cpp/classes/sphere_mesh.hpp>
+#include <godot_cpp/classes/standard_material3d.hpp>
+
 using namespace godot;
 
 void Terrain::_bind_methods() {
@@ -27,6 +31,8 @@ void Terrain::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_resolution_scale", "p_scale"), &Terrain::set_resolution_scale);
     ClassDB::bind_method(D_METHOD("get_resolution_scale"), &Terrain::get_resolution_scale);
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "resolution_scale"), "set_resolution_scale", "get_resolution_scale");
+
+    ClassDB::bind_method(D_METHOD("check_vertices_index"), &Terrain::check_vertices_index);
 }
 
 Terrain::Terrain() {
@@ -124,4 +130,34 @@ void Terrain::generate_mesh() {
     mdt->commit_to_surface(mesh);
 
     mesh_instance->set_mesh(mesh);
+}
+
+Ref<MeshDataTool> Terrain::get_mdt() { return mdt; }
+void Terrain::set_mdt(Ref<MeshDataTool> p_mdt) { mdt = p_mdt; }
+
+int Terrain::get_mesh_size() {
+    return (int) (size * resolution_scale) + 1;
+}
+
+void Terrain::check_vertices_index() {
+    Ref<MeshDataTool> mdt = get_mdt();
+    int size = get_real_size();
+
+    for (int y = 0; y < size; y++) {
+    for (int x = 0; x < size; x++) {
+        Ref<SphereMesh> sphere_mesh;
+        sphere_mesh.instantiate();
+
+        Ref<StandardMaterial3D> mat;
+        mat.instantiate();
+        mat->set_albedo(Color(y/((float) size), 0.0, 0.0));
+        sphere_mesh->set_material(mat);
+
+        MeshInstance3D* m_inst = memnew(MeshInstance3D);
+        m_inst->set_mesh(sphere_mesh);
+        m_inst->set_position(Vector3(x - size/2, 0, y - size/2));
+
+        add_child(m_inst);
+    }
+    }
 }

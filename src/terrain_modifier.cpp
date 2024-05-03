@@ -1,8 +1,8 @@
 #include "terrain_modifier.h"
 
 #include <godot_cpp/core/class_db.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/godot.hpp>
+#include <godot_cpp/variant/utility_functions.hpp>
 
 #include <godot_cpp/classes/image.hpp>
 
@@ -33,8 +33,13 @@ void TerrainModifier::_bind_methods() {
     BIND_ENUM_CONSTANT(REPEAT);
 }
 
-TerrainModifier::TerrainModifier() {  }
-TerrainModifier::~TerrainModifier() {  }
+TerrainModifier::TerrainModifier() {
+    
+}
+
+TerrainModifier::~TerrainModifier() {
+    
+}
 
 void TerrainModifier::set_texture(const Ref<Texture2D> p_texture) { texture = p_texture; }
 Ref<Texture2D> TerrainModifier::get_texture() const { return texture; }

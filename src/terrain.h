@@ -32,6 +32,14 @@ class Terrain : public Node3D {
         void initialize_mesh_instance();
         void apply_modifiers();
         void generate_mesh();
+
+        Ref<MeshDataTool> get_mdt();
+        void set_mdt(Ref<MeshDataTool> p_mdt);
+
+        int get_mesh_size();
+
+        // - DEBUG FUNCTIONS -//
+        void check_vertices_index();
     
     private:
         MeshInstance3D* mesh_instance;
